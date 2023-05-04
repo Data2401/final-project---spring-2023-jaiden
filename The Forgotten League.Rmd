@@ -1,0 +1,174 @@
+---
+title: "The Forgotten League"
+author: "Jaiden Brown"
+date: "04/26/2023"
+output: slidy_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Data
+
+https://github.com/fivethirtyeight/negro-leagues-player-ratings
+
+The github repository with the dataset, this analyses will explain the story and stats of many forgotten baseball stars. 
+
+Barrier of entry:
+
+Negro league: 150 games as a batter or 60 games + starts as a pitcher
+
+MLB: 300 games as a batter or 350 games + starts as a pitcher
+
+
+## The goal of our analysis
+
+- How good were the players from the NLB ?
+- Was the average NLB player comparable to the average MLB player ?
+- Should these stats count today with the MLB ?
+
+
+## Libraries
+```{r echo=TRUE, message=FALSE}
+
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(plotly)
+
+#install.packages("plotly")
+```
+
+
+## Our Table
+```{r echo=TRUE, message=FALSE}
+
+library(readr)
+RawNLBandMLB <- read_csv("negro-leagues-player-ratings.csv")
+
+glimpse(RawNLBandMLB)
+
+```
+
+## Variables
+
+- WAR: WAR measures a player's value in all facets of the game by deciphering how many more wins he's worth than a replacement-level player at his same position (Per MLB.com)
+- playerID: unique player ID tag
+- league: league played in
+- PositionWar: WAR in their category - whether a position player or pitcher 
+- averageHit: batting average percentile 
+- defense: defensive WAR percentile
+- shortWAR: WAR per 162 games
+- Era: earned run average percentile
+
+
+## Filtering
+
+```{r echo=TRUE}
+NLBandMLB <- RawNLBandMLB %>% select(playerID, commonName, league, hof, startYear, endYear, totalGames, positionWar, averageHit, defense, gameCutoff, playerLabel, shortWar, positionCat, position, era)
+
+NLB <- NLBandMLB %>% filter(league == 'NLB')
+
+MLB <- NLBandMLB %>% filter(league == 'MLB')
+
+glimpse(NLBandMLB)
+
+```
+
+## Could NLB player even compete in the majors?
+
+```{r echo=TRUE}
+
+duplicatedData <- inner_join(x = NLB, y = MLB, by = "commonName") %>% select("commonName")
+
+PlayersInBothLeagues <- inner_join(NLBandMLB, duplicatedData, by = "commonName")
+
+ggplot(PlayersInBothLeagues, mapping = aes(shortWar, commonName, color = league)) +
+  geom_point()
+
+```
+
+Are the distribution of WAR similar across both leagues?
+
+
+```{r echo=TRUE}
+
+ggplot(NLBandMLB, mapping = aes(league, shortWar, fill = league)) +
+  geom_boxplot()
+
+```
+
+Conclusion: The talent in both leagues are comparable
+
+## Who were the very best in the NLB and how to they compare to the MLB?
+
+```{r}
+
+ggplot(NLBandMLB, aes(shortWar, positionWar, color = league)) +
+  geom_point()
+
+```
+
+Who are the superstars in the NLB?
+
+```{r}
+
+NLBinteractive <- plot_ly(NLB, x = ~shortWar, y = ~positionWar, type = 'scatter', mode = 'markers',
+        text = ~paste('Name ', commonName))
+
+NLBinteractive
+
+```
+
+## Where would the NLB batters rank all time?
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+NLBandMLB %>% select(commonName, league, averageHit, shortWar, hof) %>% arrange(desc(averageHit)) %>% slice_head(n=20)
+
+
+ggplot(NLBandMLB, aes(averageHit, fill = league)) +
+  geom_histogram(binwidth = 10) +
+  facet_grid(~league)
+```
+
+
+## Well who was pitching to these batters?
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+NLBandMLB %>% select(commonName, era, shortWar, league, hof, playerLabel, position) %>% filter(era > 90) %>% ggplot() + geom_bar(aes(playerLabel,fill=position)) + ggtitle("ERA 90th percentile")
+
+ggplot(NLBandMLB, aes(league, era, fill = league)) +
+  geom_boxplot() +
+  ggtitle("Average Era across leagues")
+
+```
+
+
+## How did their War compare to their counterparts?
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+ggplot(NLBandMLB, aes(era, shortWar, color = league)) +
+  geom_point() +
+  geom_smooth() +
+  ggtitle("Era and War of pitchers")
+
+```
+
+### Who were these players?
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+NLBinteractivePitchers <- plot_ly(NLB, x = ~era, y = ~shortWar, type = 'scatter', mode = 'markers',
+        text = ~paste('Name: ', commonName))
+
+NLBinteractivePitchers
+
+```
+
+## Summary
+
+After looking and comparing the data I believe it was right for the MLB to recognize and add the stats of many of these players to the MLB as they had very similar competition and many that came out of the NLB was able to produce as similar if not higher levels in the MLB then they did while in the NLB
