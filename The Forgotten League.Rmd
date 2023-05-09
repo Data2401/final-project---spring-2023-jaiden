@@ -2,12 +2,16 @@
 title: "The Forgotten League"
 author: "Jaiden Brown"
 date: "04/26/2023"
-output: slidy_presentation
+output: html_document
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
 ```
+
+## Introduction
+
+Americas greatest pasttime, Baseball. one fo the most storied sports in our history. but what if i told you there was a secret league of some of the greatest baseball players that we've never heard of. Thus secret league was the NLB, Negro league baseball, which was a collection of smaller leagues of negro players during segregation in america. these leagues started around the 1920's and ended around the 1950's when many of these players were finally accepted into the MLB. I will be exploring some of these forgotten players and some of the statistics that were hidden for many years.
 
 ## Data
 
@@ -21,6 +25,10 @@ Negro league: 150 games as a batter or 60 games + starts as a pitcher
 
 MLB: 300 games as a batter or 350 games + starts as a pitcher
 
+The MLB players include both current players and Hall of Fame players
+
+The data comes from fivethirtyeight and some of their data was sourced from https://www.seamheads.com/NegroLgs/ which is a collection of the NLB statistics. 
+
 
 ## The goal of our analysis
 
@@ -30,18 +38,20 @@ MLB: 300 games as a batter or 350 games + starts as a pitcher
 
 
 ## Libraries
+
 ```{r echo=TRUE, message=FALSE}
 
-library(tidyverse)
+library(tidyverse) #manipulate data
 library(dplyr)
-library(ggplot2)
-library(plotly)
+library(ggplot2) #for visualization
+library(plotly) #interactive graphs
 
 #install.packages("plotly")
 ```
 
 
 ## Our Table
+
 ```{r echo=TRUE, message=FALSE}
 
 library(readr)
@@ -59,11 +69,21 @@ glimpse(RawNLBandMLB)
 - PositionWar: WAR in their category - whether a position player or pitcher 
 - averageHit: batting average percentile 
 - defense: defensive WAR percentile
-- shortWAR: WAR per 162 games
+- shortWAR: WAR per 162 games, For metrics:
+      
+                  0-2 average player
+                  
+                  2-4 Starter
+                  
+                  4+ All star level player
+                  
+                  8+ MVP level player
 - Era: earned run average percentile
 
 
 ## Filtering
+
+There is a lot of variables within this dataset that we dont need within the scope of our analysys so, were going to filter down to only the variables we need. We are then going to split the data into a NLB set and a MLB to use if we need.
 
 ```{r echo=TRUE}
 NLBandMLB <- RawNLBandMLB %>% select(playerID, commonName, league, hof, startYear, endYear, totalGames, positionWar, averageHit, defense, gameCutoff, playerLabel, shortWar, positionCat, position, era)
@@ -75,44 +95,54 @@ MLB <- NLBandMLB %>% filter(league == 'MLB')
 glimpse(NLBandMLB)
 
 ```
+This data is a lot more condense and ready for our analysts
 
 ## Could NLB player even compete in the majors?
 
+So first lets see if any players have statistics from both the MLB and the NLB to compare to each other to see if their stats are similar in both leagues. 
+
 ```{r echo=TRUE}
 
-duplicatedData <- inner_join(x = NLB, y = MLB, by = "commonName") %>% select("commonName")
+# Fidning the stats for players that have entries in both the MLB and NLB graphs 
+duplicatedData <- inner_join(x = NLB, y = MLB, by = "commonName") %>% select("commonName") 
 
 PlayersInBothLeagues <- inner_join(NLBandMLB, duplicatedData, by = "commonName")
 
-ggplot(PlayersInBothLeagues, mapping = aes(shortWar, commonName, color = league)) +
-  geom_point()
-
+ggplot(PlayersInBothLeagues, aes(y = shortWar, x = commonName, fill =league )) +
+  geom_bar(stat= 'identity', position = "dodge")
 ```
 
-Are the distribution of WAR similar across both leagues?
+There were only 3 players in this dataset that had stats in both the MLB and NLB, so lets compare their shortWars across leagues. we can see the biggest differnce being in sam crawfords stats as his short war jumped almost 4 points. the story not told within this stats is that when Sam Crawford changed leagues he also changed positions going from a pitcher to an outfiled which makes his WAR stats jump a lot so his transfer is hard to compare. But for Roy and Monte we can see Roy was almost the exact same level player he was in the NLB, and Monte dropped from an almost MVP player in the NLB to an All Star in the MLB. While this sample size is really small it shows up the compotition in both leagues are fairly comprabale
 
+
+## Are the distribution of WAR similar across both leagues?
 
 ```{r echo=TRUE}
 
+# creating a box plot to show the distribution of WAR across leagues 
 ggplot(NLBandMLB, mapping = aes(league, shortWar, fill = league)) +
   geom_boxplot()
 
 ```
 
-Conclusion: The talent in both leagues are comparable
+While this is a very broad question it shows that the negro players on average were a little worse than the MLB players but there maybe a hidden reason why the NLB graph is lower on average. 
 
 ## Who were the very best in the NLB and how to they compare to the MLB?
 
-```{r}
+```{r echo=TRUE}
 
 ggplot(NLBandMLB, aes(shortWar, positionWar, color = league)) +
   geom_point()
 
 ```
 
-Who are the superstars in the NLB?
+This graph is a graph of all players in this dataset and colored by league. PositionWar is notibley better for the MLB players but positionWar increases the more games you play so the top MLB players have over 2,000 games played compared to the NLB players who cap out around half of that. While the spread across shortWar is pretty even what intrest me the most is the the number of NLB playes in the negative in terms of position and ShortWar. The reasoning for this is the same as to why the box plot above was skewed downwards for the Negro league and that is, the barrier of entry is a lot lower for the NLB for this dataset. This is not a complete view of every MLB player and while there are mny MLB players that have negative WAR stats for their careers, like the negro players, they didnt play enough games in the MLB to be counted in this set as some of the NLB players were in and out the league pretty quick but were able to play long ennough to qualify to be in this dataset.
 
-```{r}
+Lets look at the player all the way in the bottom left, his name is Percy Forrest. Percy was a pitcher and an outfileder. on average across his 6 seasons as a pro Percy only played 6 games a season and the NLB season had 81 games and his war stats show that he was a bad player that didnt play much only 6 games a season but was able to stick around the league for 6 seasons to play enough games in total to qualift to be in this dataset. In comparision to the MLBs qualifications where played have to play around 300 games, its more likley that soemone with 300 games played wouldnt be nearly as bad as Percy was.
+
+## Who are the superstars in the NLB?
+
+```{r echo=TRUE}
 
 NLBinteractive <- plot_ly(NLB, x = ~shortWar, y = ~positionWar, type = 'scatter', mode = 'markers',
         text = ~paste('Name ', commonName))
@@ -121,35 +151,42 @@ NLBinteractive
 
 ```
 
+With this graph we can see some of the best players that were in the Negro leagues. we see names like Josh Gibson, Dobbie Moore and Charlie Smith, who put up similar shortWar stats to Babe Ruth, the unanimous best baseball player ever, and these are some names that we've never heard of. These 3 players have shortWars over 10 making them some of the best baseball players of all time. its interesting to look over some of these names and see the amazing stats they put up through their careers.
+
 ## Where would the NLB batters rank all time?
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
+```{r echo=TRUE, message=FALSE, warning=FALSE}
 
 NLBandMLB %>% select(commonName, league, averageHit, shortWar, hof) %>% arrange(desc(averageHit)) %>% slice_head(n=20)
 
+```
+
+First lets look at the batting statistics for players in both of these leagues, remember this statistics for batting are in percentile. We can see the 100th percentile as the best batters of all time and One is Ty Cobb who is a very famous player and regarded as one of the best ever, But right under Ty we have Charile Smith a negro player who is also in the 100th percentile of batters who many people have never heard of. and with only these two players we can see Charile has a shortWar of 2 points better than Ty. While theres not an abundance we also see Josh Gibson in the 99th percentile abd for both of these NLB players the only player in the top 20 batters with a higher shortWar is Babe Ruth making there statisticsn an amazing feat. 
+
+```{r echo=TRUE, message=FALSE, warning=FALSE}
 
 ggplot(NLBandMLB, aes(averageHit, fill = league)) +
   geom_histogram(binwidth = 10) +
   facet_grid(~league)
 ```
 
+This graph shows the amount of players in each percentile for Batting and which league theyre in. as we can see in the top ~95 percentile there are around 20 players in the NLB. and while that not a huge amount of players that is still a significant amount of players that have been forggetn through history, while we speak about Babe Ruth, Ty Cobb, Hank Aaron, there are 20 names of NLB players that we could add to that conversation.  
 
 ## Well who was pitching to these batters?
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
+This is a great question to ask because the batting stats for the Negro league players would be as impactful if the pitchers in the negro leagues were bad so lets look and see. 
+
+```{r echo=TRUE, message=FALSE, warning=FALSE}
 
 NLBandMLB %>% select(commonName, era, shortWar, league, hof, playerLabel, position) %>% filter(era > 90) %>% ggplot() + geom_bar(aes(playerLabel,fill=position)) + ggtitle("ERA 90th percentile")
 
-ggplot(NLBandMLB, aes(league, era, fill = league)) +
-  geom_boxplot() +
-  ggtitle("Average Era across leagues")
-
 ```
 
+In this graph we can see the amount of players in the 90th percentile of ERA in the 3 main categories of our dataset. we can see that there are around 20 negro league pitchers that acount for the 90th percientile showing that there were very good pitchers in the negro league making the stats that Charlie smith and Josh Gibson just as impressive as thsoe of babe ruth and Ty cobb. In this graph we also see a huge influx of active players in this 90th percentile. The reasoning for this is a long story but its a combination of a lot of things. a lot of great pitches have entered the league theres been advancments in analytics anf how to pitch theres been a lot of cheating to improve things like spin rates to make thes pitchers better, theres been a lot of rule changes to favor pitches. The MLB is currently in the proccess of changing rules and cracking down on cheating which would lower a lot of these statistics for the sctive platers in the MLB right now.  
 
 ## How did their War compare to their counterparts?
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
+```{r echo=TRUE, message=FALSE, warning=FALSE}
 
 ggplot(NLBandMLB, aes(era, shortWar, color = league)) +
   geom_point() +
@@ -158,9 +195,11 @@ ggplot(NLBandMLB, aes(era, shortWar, color = league)) +
 
 ```
 
+The Graph above shows the short war for the pitchers and the percentile their in for ERA. We can see on averagwe for the 50th percentile and up the shortWar for the pitchers in the NLB were better than their MLB counterparts. While i dont think all the Negro league putchers were better than the MLB pitchers i think this graph shows that there were very good pithcers in the negro leagues further the impressiveness of the batting stats from many of the negro lrague players. 
+
 ### Who were these players?
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
+```{r echo=TRUE, message=FALSE, warning=FALSE}
 
 NLBinteractivePitchers <- plot_ly(NLB, x = ~era, y = ~shortWar, type = 'scatter', mode = 'markers',
         text = ~paste('Name: ', commonName))
@@ -169,6 +208,8 @@ NLBinteractivePitchers
 
 ```
 
+This graphs gives the names of many of the greatest pitcher in the negroo lragues players like Stachel Paige, Jose Leblanc, and Martin Dihigo. 3 Pithcers that should be spoke about in the conversation of the greatest pitchers in the history of the game. 
+
 ## Summary
 
-After looking and comparing the data I believe it was right for the MLB to recognize and add the stats of many of these players to the MLB as they had very similar competition and many that came out of the NLB was able to produce as similar if not higher levels in the MLB then they did while in the NLB
+After looking and comparing the data I believe it was right for the MLB to recognize and add the stats of many of these players to the MLB as they had very similar competition and many that came out of the NLB was able to produce as similar if not higher levels in the MLB then they did while in the NLB. I think its important that we push the story of many of these Negro league players and shine the light on the league that was left in the darkness for many years. 
