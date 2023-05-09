@@ -46,7 +46,6 @@ library(dplyr)
 library(ggplot2) #for visualization
 library(plotly) #interactive graphs
 
-#install.packages("plotly")
 ```
 
 
